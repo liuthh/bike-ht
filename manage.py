@@ -3,6 +3,7 @@ from flask_migrate import Migrate,MigrateCommand
 from app import app
 from exts import db
 from apps.front.models import UserModel
+from apps.models import ShopImgModel,ShopModel
 
 Migrate(app=app,db=db)
 manager=Manager(app=app)

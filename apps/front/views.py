@@ -1,3 +1,5 @@
+import json
+
 from flask import (
                     Blueprint,
                     request,
@@ -13,6 +15,7 @@ from .forms import (
                     Verify_code_login,
                     Verify_resetpassword
                     )
+from apps.models import ShopModel,ShopImgModel
 from exts import db
 from .models import UserModel
 from config import User
@@ -71,3 +74,34 @@ def regist():
         else:
             message = form.errors.popitem()[1][0]                   #弹出第一条出错信息
             return jsonify({'code':412,'message':message})
+
+
+
+
+@bp.route('/getspDetial/',methods=['GET'])                                                   #搜索商品
+def getspDetial():
+    '''
+    ：param:   content(搜索内容)    String
+    :return:   code  200           请求数据成功
+               code  201           仓库没有此商品
+               code  412           用户没有输入商品内容
+    '''
+    content=request.args.get('content')
+    page=request.args.get('page',default=1)
+    if content:
+        start = (page - 1) * 8
+        end = start + 8
+        content='%'+content+'%'
+        print(content)
+        shops=ShopModel.query.filter(ShopModel.title.like(content)).slice(start,end).all()
+        if shops:
+            print(shops)
+            shops_dic=[]
+            for shop in shops:
+                shops_dic.append(shop.to_dic())
+            print(shops_dic)
+            return jsonify(code=200,message=shops_dic)
+        else:
+            return jsonify({'code':201,'message':'没有找到您搜索的商品'})
+    else:
+        return jsonify({'code':412,'message':'接受参数错误，没有获取到content,或者content为空'})

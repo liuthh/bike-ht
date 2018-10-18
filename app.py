@@ -13,7 +13,7 @@ app.register_blueprint(common)  #导入公共蓝图
 app.register_blueprint(cms)     #导入后台蓝图
 app.config.from_object(config)
 db.init_app(app=app)
-flask_cors.CORS(app, supports_credentials=True)
+flask_cors.CORS(app, supports_credentials=True)   #解决跨域问题
 
 
 

@@ -6,10 +6,11 @@ class ShopModel(db.Model):       #商品表
     id=db.Column(db.Integer,primary_key=True,autoincrement=True,nullable=False)
     title=db.Column(db.String(100),nullable=False)                                  #标题
     brand=db.Column(db.String(100),nullable=False)                                  #品牌
-    price=db.Column(db.Integer,nullable=False)                                #价格
+    price=db.Column(db.Integer,nullable=False)                                      #价格
     create_time=db.Column(db.DateTime,default=datetime.now(),nullable=False)        #价格
     intr=db.Column(db.Text,nullable=False)                                          #商品简介
     color=db.Column(db.String(10),nullable=False)                                   #商品颜色
+    Sales=db.Column(db.Integer,default=0)                                           #销量
 
 
     def to_dic(self):

@@ -82,26 +82,72 @@ def regist():
 def getspDetial():
     '''
     ：param:   content(搜索内容)    String
+                1: 按最新发布排序
+                2：按价格排序(降序)
+                3：按销量排序（降序）
     :return:   code  200           请求数据成功
                code  201           仓库没有此商品
-               code  412           用户没有输入商品内容
+               code  202           用户没有输入商品内容,返回全部商品
+
+
+
     '''
-    content=request.args.get('content')
-    page=request.args.get('page',default=1)
+    content=request.args.get('content')                        #搜索内容
+    page=request.args.get('page',default=1)                    #当前页数
+    sort=request.args.get('sort',default=1)                    #排序方式
+    start = (page - 1) * 8
+    end = start + 8
+    sort=int(sort)
     if content:
-        start = (page - 1) * 8
-        end = start + 8
         content='%'+content+'%'
-        print(content)
-        shops=ShopModel.query.filter(ShopModel.title.like(content)).slice(start,end).all()
-        if shops:
-            print(shops)
+        if sort==1:
+            shops=ShopModel.query.order_by(ShopModel.create_time.desc()).filter(ShopModel.title.like(content)).slice(start,end).all()
+            if shops:
+                shops_dic=[]
+                for shop in shops:
+                    shops_dic.append(shop.to_dic())
+                return jsonify(code=200,message=shops_dic)
+            else:
+                return jsonify({'code':201,'message':'没有找到您搜索的商品'})
+        elif sort==2:
+            shops=ShopModel.query.order_by(ShopModel.price.desc()).filter(ShopModel.title.like(content)).slice(start,end).all()
+            if shops:
+                shops_dic=[]
+                for shop in shops:
+                    shops_dic.append(shop.to_dic())
+                return jsonify(code=200,message=shops_dic)
+            else:
+                return jsonify({'code':201,'message':'没有找到您搜索的商品'})
+        elif sort==3:
+            shops = ShopModel.query.order_by(ShopModel.sales.asc()).filter(ShopModel.title.like(content)).slice(start,end).all()
+            if shops:
+                shops_dic = []
+                for shop in shops:
+                    shops_dic.append(shop.to_dic())
+                return jsonify(code=200, message=shops_dic)
+            else:
+                return jsonify({'code': 201, 'message': '没有找到您搜索的商品'})
+
+    else:                                                                   #没有接受搜索条件
+        if sort==3:
+            shops=ShopModel.query.order_by(ShopModel.create_time.desc()).slice(start,end).all()
             shops_dic=[]
             for shop in shops:
                 shops_dic.append(shop.to_dic())
-            print(shops_dic)
-            return jsonify(code=200,message=shops_dic)
-        else:
-            return jsonify({'code':201,'message':'没有找到您搜索的商品'})
-    else:
-        return jsonify({'code':412,'message':'接受参数错误，没有获取到content,或者content为空'})
+            return jsonify({'code':202,'message':shops_dic})
+        elif sort==2:
+            shops=ShopModel.query.order_by(ShopModel.price.desc()).slice(start,end).all()
+            shops_dic = []
+            for shop in shops:
+                shops_dic.append(shop.to_dic())
+            return jsonify({'code': 202, 'message': shops_dic})
+        elif sort==3:
+            shops = ShopModel.query.order_by(ShopModel.Sales.asc()).slice(start,end).all()
+            shops_dic = []
+            for shop in shops:
+                shops_dic.append(shop.to_dic())
+            return jsonify({'code': 202, 'message': shops_dic})
+
+
+
+

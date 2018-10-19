@@ -1,9 +1,7 @@
 from wtforms import Form,StringField,IntegerField
-from flask import g
 from wtforms.validators import Length,Regexp,EqualTo,ValidationError,InputRequired
 from utils.memcached import mc
 from .models import UserModel
-from apps.models import GoodsModel
 
 
 class Verify_regist(Form):                                         #前台用户注册验证
@@ -55,7 +53,7 @@ class Verify_resetpassword(Form):                                   #修改密�
 
 class Verify_GenerateOrder(Form):                                  #生成订单验证
     # 数量（number），商品单价（price）, 商品编号（good_id),
-    number=IntegerField(validators=[Regexp(r'*{1,99}',message='商品的数量只能是1到99之间')])
-    price=IntegerField(validator=[InputRequired(message='价格不能为空')])
+    number=IntegerField(validators=[InputRequired('数量不能为空')])
+    price=IntegerField(validators=[InputRequired(message='价格不能为空')])
     good_id=IntegerField(validators=[InputRequired(message='商品ID不能为空')])
     address_id=IntegerField(validators=[InputRequired(message='地址不能为空')])

@@ -178,8 +178,8 @@ def getSpDetial():
         return jsonify({'code':412,'message':'接受参数错误'})
     
     
-@bp.route('/genarateOrder/',methods=['POST','GET'])  #生成订单
-@RequestLogin
+@bp.route('/genarateOrder/',methods=['POST','GET'])             #生成订单
+# @RequestLogin
 def genarateOrder():
     '''
     :param:    商品的id(good_id)
@@ -191,12 +191,13 @@ def genarateOrder():
         good_id=request.args.get('good_id')
         if good_id:
             good=GoodsModel.query.get(good_id)
-            good_dic=good.to_dic
+            good_dic=good.to_dic()
             user=g.front_user
+            # user=UserModel.query.get(1)                  #测试数据
             addresses=user.addresses
             addresses_dic=[]                        #用户的所有地址
             for address in addresses:
-                addresses_dic.append(address.to_dic)
+                addresses_dic.append(address.to_dic())
             return jsonify({'code':200,'good_dic':good_dic,'addresses_dic':addresses_dic})
         else:
             return jsonify({'code':404,'message':'不存在该商品'})
@@ -208,23 +209,30 @@ def genarateOrder():
                    code  411   没有数据库未找到
                    code  200   返回该商品信息(set)    返回当前用户的所有地址(list)
         '''
+        print('ok')
         form=Verify_GenerateOrder(request.form)
         if form.validate():
+            print('123')
             number=form.number.data
             price=form.price.data
             good_id=form.good_id.data
             address=form.address_id.data
-            user=g.front_user
+            # user=g.front_user
+            user=UserModel.query.get(1)                  #测试数据
+            print(1)
             good=GoodsModel.query.filter_by(id=good_id).first()     #商品对象
             if good:
                 address=AddressModel.query.filter_by(id=address).first()
                 if address:
                     id=random.randrange(100000000000,999999999999)  #随机生成12位订单号
                     order=OrderModel(id=id,number=number,good_price=price)
+                    print(1)
                     order.address=address
                     order.good=good
                     order.user=user
+                    print(2)
                     db.session.add(order)
+                    print(order)
                     db.session.commit()
                     return jsonify({'code':'200','message':'生成订单成功','id':id})
                 else:

@@ -13,6 +13,7 @@ class GoodsImgModel(db.Model):      #商品图片表
     url_img=db.Column(db.String(200),nullable=False)                            #图片的url
     goods_id=db.Column(db.Integer,db.ForeignKey('goods.id'),nullable=False)     #商品的id
 
+    goods=db.relationship('GoodsModel',backref='goods_img')
     def to_dic(self):
         '''将对象转换成字典'''
         d={
@@ -22,7 +23,6 @@ class GoodsImgModel(db.Model):      #商品图片表
         }
         return d
 
-    goods=db.relationship('GoodsModel',backref='goods_img')
 
 
 class AddressModel(db.Model):        #收货地址模型
@@ -36,7 +36,6 @@ class AddressModel(db.Model):        #收货地址模型
     rcAddress=db.Column(db.String(200),nullable=False)                      #收货地址
 
     user=db.relationship('UserModel',backref='addresses')
-    order=db.relationship('OrderModel',uselist=False)                       #和订单模型建立1对1关系
 
     def to_dic(self):
         d={
@@ -46,6 +45,7 @@ class AddressModel(db.Model):        #收货地址模型
             'rcname':self.rcName,
             'rcaddress':self.rcAddress
         }
+        return d
 
 class StatusEnum(enum.Enum):                                        #订单状态枚举类
     WAIT_PAY=1      #未付款
@@ -101,6 +101,45 @@ class GoodsModel(db.Model):       #商品表
             'color':self.color,
             'sales':self.Sales,
             'stock':self.stock
+        }
+        return d
+
+Cart_Goods_Middle=db.Table('cart_goods_middle',                                     #购物车商品中间表
+                           db.Column('goods_id',db.Integer,db.ForeignKey('goods.id'),primary_key=True),
+                           db.Column('cart_id',db.Integer,db.ForeignKey('cart.id'),primary_key=True)
+                           )
+
+class CartModel(db.Model):                                                         #购物车模型
+    __tablename__='cart'
+    id=db.Column(db.Integer,primary_key=True,nullable=False,autoincrement=True)    #唯一标识
+    goods_id=db.Column(db.Integer,db.ForeignKey('goods.id'),nullable=False)        #商品外键
+    user_id=db.Column(db.String(200),db.ForeignKey('user.id'),nullable=False)      #用户外键
+    number=db.Column(db.Integer,nullable=False)                                    #商品数量
+    create_time=db.Column(db.DateTime,default=datetime.now())                      #创建时间
+
+    user=db.relationship('UserModel',backref=backref('cart',uselist=False))               #用户和购物车1对1关系
+    goods = db.relationship('GoodsModel', secondary=Cart_Goods_Middle, backref='carts')  # 和CMS表建立多对多的关系
+
+
+
+class PostModel(db.Model):                                                          #帖子模型
+    __tablename__ = 'post'
+    id = db.Column(db.Integer,primary_key=True,autoincrement=True)                  #id
+    title = db.Column(db.String(200),nullable=False)                                #标题
+    content = db.Column(db.Text,nullable=False)                                     #内容
+    isgood=db.Column(db.DateTime,nullable=True)                                     #加精
+    create_time = db.Column(db.DateTime,default=datetime.now)                       #创建时间
+    author_id = db.Column(db.String(200),db.ForeignKey("user.id"),nullable=False)   #作者ID
+
+    author = db.relationship("UserModel",backref='posts')                           #用户和帖子的关系
+
+    def to_dic(self):
+        d={
+            'id':self.id,
+            'title':self.title,
+            'content':self.content,
+            'isgood':self.isgood,
+            'create_time':self.create_time,
         }
         return d
 

@@ -1,5 +1,6 @@
 import json
 import random
+import config
 from flask import (
                     Blueprint,
                     request,
@@ -14,14 +15,24 @@ from .forms import (
                     Verify_login,
                     Verify_code_login,
                     Verify_resetpassword,
-                    Verify_GenerateOrder
+                    Verify_GenerateOrder,
+                    Verify_aCart,
+                    Verify_dCart,
+                    Verify_apost
                     )
-from .decorators import RequestLogin
-from apps.models import GoodsModel,GoodsImgModel,AddressModel,OrderModel
+from apps.models import (
+                         GoodsModel,
+                         AddressModel,
+                         OrderModel,
+                         CartModel,
+                         PostModel
+                         )
 from exts import db
 from .models import UserModel
+from .decorators import RequestLogin
 from config import User
-from flask import Response
+
+
 bp=Blueprint('front',__name__)
 
 
@@ -41,7 +52,7 @@ class View_Login(views.MethodView):                                #前台登录
             user=UserModel.query.filter_by(mobile=mobile).first()
             if user:
                 if user.check_passwd(passwd=password):
-                    session[User]=user.id
+                    session[User] = user.id
                     return jsonify({'code':200,'message':'登录成功'})
                 else:
                     return jsonify({'code': 401, 'message': '用户名或者密码错误'})
@@ -51,8 +62,6 @@ class View_Login(views.MethodView):                                #前台登录
             message=form.errors.popitem()[1][0]                         #返回验证出错的第一条错误信息
             return jsonify({'code':412,'message':message})
 bp.add_url_rule('/login/',view_func=View_Login.as_view('login'))
-
-
 
 
 @bp.route('/regist/',methods=['POST'])                            #前台注册功能api
@@ -80,7 +89,7 @@ def regist():
 
 
 
-@bp.route('/searchShop/',methods=['GET'])                                                   #搜索商品
+@bp.route('/searchShop/',methods=['GET'])                      #搜索商品
 def searchShop():
     '''
     ：param:   content(搜索内容)    String
@@ -153,7 +162,7 @@ def searchShop():
 
 
 
-@bp.route('/getSpDetial/',methods=['GET'])                #进入商品详情页
+@bp.route('/getSpDetial/',methods=['GET'])                       #进入商品详情页
 def getSpDetial():
     '''
     :param      商品id(spId)          string
@@ -176,10 +185,10 @@ def getSpDetial():
             return jsonify({'code':404,'message':'不存在该商品'})
     else:
         return jsonify({'code':412,'message':'接受参数错误'})
-    
-    
+
+
 @bp.route('/genarateOrder/',methods=['POST','GET'])             #生成订单
-# @RequestLogin
+@RequestLogin
 def genarateOrder():
     '''
     :param:    商品的id(good_id)
@@ -242,6 +251,160 @@ def genarateOrder():
         else:
             message=form.errors.popitem()[0][1]                     #弹出表单验证第一条出错信息
             return jsonify({'code':412,'message':message})
+
+@bp.route('/personal/',methods=['GET'])                                           #个人中心
+@RequestLogin
+def personal():
+    '''
+    :return: code 305   用户未登陆
+            code 200    注销成功
+    '''
+    user=g.front_user
+    user=user.to_dic()
+    return jsonify({'code':200,'message':user})
+
+
+
+
+@bp.route('/delogin/')                                                              #注销登录
+@RequestLogin
+def delogin():
+    del session[config.User]
+    return jsonify({'code':200,'message':'注销成功'})
+
+
+@bp.route('/reSetPasswd/',methods=['POST'])                                          #修改密码
+@RequestLogin
+def reSetPasswd():
+    '''
+    :param:  null
+    :return: code 412： 表单验证有问题
+             code 401:  密码错误
+             code 200:  修改密码成功
+             code 305:   用户未登陆
+    '''
+    form=Verify_resetpassword(request.form)
+    if form.validate():
+        password=form.password.data
+        newpassword=form.newpassword.data
+        user=g.front_user
+        if user.check_passwd(password):
+            user.passwd=newpassword
+            db.session.commit()
+            return jsonify({'code':200,'message':'修改密码成功'})
+        else:
+            return jsonify({'code':401,'message':'密码错误'})
+    else:
+        message=form.errors.popitem()[0][1]                         #弹出表单验证失败第一条错误信息
+        return jsonify({'code':412,'message':message})
+
+
+@bp.route('/aCart/',methods=['POST'])                                #添加购物车
+@RequestLogin
+def aCart():
+    '''
+    :param:  goods_id(商品id)
+    :return: code  200    加入购物车成功
+             code  411    该商品不存在或者已经下架
+             code  412    表单验证失败
+             code  305    用户未登陆
+    '''
+    form=Verify_aCart(request.form)
+    if form:
+        number=1                                                        #默认加入购物车商品1件
+        goods_id=form.goods_id.data
+        user=g.front_user
+        goods=GoodsModel.query.filter_by(id=goods_id).first()          #查询是否有这件商品
+        if goods:
+            cart1=CartModel.query.filter_by(goods_id=goods_id).first()#判断这件商品用户的购物车中是否已存在
+            if cart1:
+                cart1.number+=1
+                db.session.commit()
+                return jsonify({'code':200,'message':'商品数量加1'})
+            else:
+                cart = CartModel(number=number)
+                cart.user = user
+                cart.goods = goods
+                db.session.add(cart)
+                db.session.commit()
+                return jsonify({'code': 200, 'message': '加入购物车成功'})
+        else:
+            return jsonify({'code':411,'message':'该商品已下架，或者不存在'})
+    else:
+        message=form.errors.popitem()[0][1]                         #弹出表单验证失败第一条错误信息
+        return jsonify({'code':412,'message':message})
+
+
+
+@bp.route('/delGoods/',methods=['POST'])                                             #移除购物车商品
+@RequestLogin
+def delGoods():
+    '''
+    :param: 商品id(good_id)    1表示删除商品 0表示商品减1（types）
+    :return:
+            code 201    商品数量只剩下1
+            code 202    商品-1成功
+            code 200    删除商品成功
+            code 411    购物车中不存在该商品
+            code 412    表单验证失败
+    '''
+    form=Verify_dCart(request.form)
+    if form:
+        goods_id=form.goods_id.data
+        types=form.types.data
+        user_id=g.front_user.id
+        cart=CartModel.query.filter_by(goods_id=goods_id,user_id=user_id).first() #查询购物车的这个商品
+        if cart:
+            if types==1:
+                count=cart.number
+                if count<=1:
+                    return jsonify({'code':201,'message':'购物车商品只剩下1'})
+                else:
+                    cart.number-=1
+                    db.session.commit()
+                    return jsonify({'code':202,'message':'商品减1成功'})
+            else:
+                del cart
+                db.session.commit()
+                return jsonify({'code':200,'message':'删除商品成功'})
+        else:
+            return jsonify({'code':411,'message':'购物车中不存在该商品'})
+    else:
+        message = form.errors.popitem()[0][1]                       # 弹出表单验证失败第一条错误信息
+        return jsonify({'code': 412, 'message': message})
+
+
+
+@bp.route('/postlist/',methods=['GET'])                               # 帖子列表接口（所有）
+def postlist():
+    posts1=PostModel.query.all()
+    posts=[]
+    for post in posts1:
+        posts.append(post.to_dic())
+    return jsonify({'code':200,'message':posts})
+
+
+@bp.route('/apost/')                                                   #发布帖子功能
+@RequestLogin
+def apost():
+    '''
+
+    :return:
+    '''
+    form=Verify_apost(request.form)
+    if form.validate():
+        title=form.title.data
+        content=form.content.data
+        user=g.front_user
+        post=PostModel(title=title,content=content)
+        post.author=user
+        db.session.add(post)
+        db.session.commit()
+        return jsonify({'code':200,'message':'发布成功'})
+
+    else:
+        message = form.errors.popitem()[0][1]  # 弹出表单验证失败第一条错误信息
+        return jsonify({'code': 412, 'message': message})
 
 
 

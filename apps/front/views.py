@@ -323,8 +323,8 @@ def aCart():
                 return jsonify({'code':200,'message':'商品数量加1'})
             else:
                 cart = CartModel(number=number)
-                cart.user = user
-                cart.goods = goods
+                cart.user.append(user)
+                cart.goods_id = goods.id
                 db.session.add(cart)
                 db.session.commit()
                 return jsonify({'code': 200, 'message': '加入购物车成功'})

@@ -81,11 +81,11 @@ class GoodsModel(db.Model):       #商品表
     brand=db.Column(db.String(100),nullable=False)                                  #品牌
     price=db.Column(db.Integer,nullable=False)                                      #价格
     create_time=db.Column(db.DateTime,default=datetime.now(),nullable=False)        #价格
-    intr=db.Column(db.Text,nullable=False)                                          #商品简介
+    intr=db.Column(db.Text)                                          #商品简介
     color=db.Column(db.String(10),nullable=False)                                   #商品颜色
     Sales=db.Column(db.Integer,default=0)                                           #销量
     stock=db.Column(db.Integer,default=0,nullable=False)                            #库存
-    main_img=db.Column(db.Integer)                                                  #主图片
+    main_img=db.Column(db.String(255))                                              #主图片
 
 
 
@@ -106,7 +106,8 @@ class GoodsModel(db.Model):       #商品表
 
 Cart_Goods_Middle=db.Table('cart_goods_middle',                                     #购物车商品中间表
                            db.Column('goods_id',db.Integer,db.ForeignKey('goods.id'),primary_key=True),
-                           db.Column('cart_id',db.Integer,db.ForeignKey('cart.id'),primary_key=True)
+                           db.Column('cart_id',db.Integer,db.ForeignKey('cart.id'),primary_key=True),
+                           db.Column('number',db.Integer,default=1)
                            )
 
 class CartModel(db.Model):                                                         #购物车模型
@@ -114,10 +115,8 @@ class CartModel(db.Model):                                                      
     id=db.Column(db.Integer,primary_key=True,nullable=False,autoincrement=True)    #唯一标识
     goods_id=db.Column(db.Integer,db.ForeignKey('goods.id'))                       #商品外键
     user_id=db.Column(db.String(200),db.ForeignKey('user.id'),nullable=False)      #用户外键
-    number=db.Column(db.Integer)                                                   #商品数量
     create_time=db.Column(db.DateTime,default=datetime.now())                      #创建时间
-
-    user=db.relationship('UserModel',backref=backref('cart',uselist=False))               #用户和购物车1对1关系
+    user=db.relationship('UserModel',backref=backref('cart',uselist=False))        #用户和购物车1对1关系
     goods = db.relationship('GoodsModel', secondary=Cart_Goods_Middle, backref='carts')  # 和CMS表建立多对多的关系
 
 

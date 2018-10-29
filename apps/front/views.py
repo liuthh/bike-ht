@@ -25,7 +25,8 @@ from apps.models import (
                          AddressModel,
                          OrderModel,
                          CartModel,
-                         PostModel
+                         PostModel,
+                         Cart_Goods_Middle
                          )
 from exts import db
 from .models import UserModel
@@ -257,7 +258,7 @@ def genarateOrder():
 def personal():
     '''
     :return: code 305   用户未登陆
-            code 200    注销成功
+            code 200    返回用户信息
     '''
     user=g.front_user
     user=user.to_dic()
@@ -316,20 +317,26 @@ def aCart():
         user=g.front_user
         goods=GoodsModel.query.filter_by(id=goods_id).first()          #查询是否有这件商品
         if goods:
-            cart1=CartModel.query.filter_by(goods_id=goods_id).first()#判断这件商品用户的购物车中是否已存在
+            cart1=CartModel.query.filter_by(user_id=user.id).first()   #查询用户是否有购物车
             if cart1:
-                cart1.number+=1
-                db.session.commit()
-                return jsonify({'code':200,'message':'商品数量加1'})
+                if CartModel.query.filter_by(user_id=user.id,goods_id=goods.id).first():
+                    goods=Cart_Goods_Middle.query.filter_by(user_id=user.id,goods_id=goods.id).first()
+                    goods.number+=1
+                    db.session.commit()
+                    return jsonify({'code':200,'message':'商品数量加1'})
+                else:
+                    cart1.goods.append(goods)
+                    db.session.commit()
+                    return jsonify({'code':201,'message':'添加购物车成功'})
             else:
                 cart = CartModel(number=number)
-                cart.user.append(user)
+                cart.user=user
+                cart.user_id=user.id
                 cart.goods_id = goods.id
+                cart.goods.append(goods)
                 db.session.add(cart)
                 db.session.commit()
                 return jsonify({'code': 200, 'message': '加入购物车成功'})
-        else:
-            return jsonify({'code':411,'message':'该商品已下架，或者不存在'})
     else:
         message=form.errors.popitem()[0][1]                         #弹出表单验证失败第一条错误信息
         return jsonify({'code':412,'message':message})
@@ -426,6 +433,8 @@ def catCart():
         return jsonify({'code':200,'message':goods_list})
     else:
         cart=CartModel(user_id=user.id)
+        db.session.add(cart)
+        db.session.commit()
         return jsonify({'code':201,'message':'购物车空'})
 
 

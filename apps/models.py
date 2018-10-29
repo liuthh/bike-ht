@@ -112,9 +112,9 @@ Cart_Goods_Middle=db.Table('cart_goods_middle',                                 
 class CartModel(db.Model):                                                         #购物车模型
     __tablename__='cart'
     id=db.Column(db.Integer,primary_key=True,nullable=False,autoincrement=True)    #唯一标识
-    goods_id=db.Column(db.Integer,db.ForeignKey('goods.id'),nullable=False)        #商品外键
+    goods_id=db.Column(db.Integer,db.ForeignKey('goods.id'))                       #商品外键
     user_id=db.Column(db.String(200),db.ForeignKey('user.id'),nullable=False)      #用户外键
-    number=db.Column(db.Integer,nullable=False)                                    #商品数量
+    number=db.Column(db.Integer)                                                   #商品数量
     create_time=db.Column(db.DateTime,default=datetime.now())                      #创建时间
 
     user=db.relationship('UserModel',backref=backref('cart',uselist=False))               #用户和购物车1对1关系

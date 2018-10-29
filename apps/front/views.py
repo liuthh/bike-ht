@@ -384,7 +384,7 @@ def postlist():
     return jsonify({'code':200,'message':posts})
 
 
-@bp.route('/apost/')                                                   #发布帖子功能
+@bp.route('/apost/',methods=['POST'])                                 #发布帖子功能
 @RequestLogin
 def apost():
     '''
@@ -405,6 +405,29 @@ def apost():
     else:
         message = form.errors.popitem()[0][1]  # 弹出表单验证失败第一条错误信息
         return jsonify({'code': 412, 'message': message})
+
+
+
+@bp.route('/catCart/',methods=['GET'])                                          # 查看购物车
+@RequestLogin
+def catCart():
+    '''
+    :return: 305 未登录
+             200 成功
+    '''
+    user=g.front_user                           #获取当前登录用户
+    cart=CartModel.query.filter_by(user_id=user.id).first()
+    if cart:
+        cart=user.cart                              #取到当前的购物车
+        goods=cart.goods                            #获取购物车的所有商品
+        goods_list=[]
+        for good in goods:
+            goods_list.append(good.to_dic())
+        return jsonify({'code':200,'message':goods_list})
+    else:
+        cart=CartModel(user_id=user.id)
+        return jsonify({'code':201,'message':'购物车空'})
+
 
 
 

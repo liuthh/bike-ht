@@ -321,29 +321,10 @@ def aCart():
             cart1=CartModel.query.filter_by(user_id=user.id).first()   #查询用户是否有购物车
             if cart1:
                 if CartModel.query.filter_by(user_id=user.id,goods_id=goods.id).first():
-
-
-                    # goods=db.session.query(cart_goods_middle).filter_by(cart_id=cart1.id,goods_id=goods.id).first()
-                    # print(11,goods)
-                    # goods.update({cart_goods_middle.number:1})
-                    '''
-                    SELECT cart_goods_middle.goods_id AS cart_goods_middle_goods_id, cart_goods_middle.cart_id AS cart_goods_middle_cart_id, cart_goods_middle.number AS cart_goods_middle_number 
-FROM cart_goods_middle 
-WHERE cart_goods_middle.cart_id = %(cart_id_1)s AND cart_goods_middle.goods_id = %(goods_id_1)s
-                    
-                    '''
-                    # print(goods.number)
-                    # print(type(goods.number))
-                    # print(goods.number)
-                    # goods.number=1
-                    # print("------------")
-                    # goods.number+=1
-                    # print('1232')
                     sql = "UPDATE cart_goods_middle SET number =number+1 WHERE cart_id ={} and goods_id={}".format(cart1.id,goods.id)
                     res = cur.execute(sql)  # 执行sql语句
                     print(res)
                     dbMy.commit()
-                    # db.session.commit()
                     return jsonify({'code':200,'message':'商品数量加1'})
                 else:
                     cart1.goods.append(goods)
@@ -450,7 +431,9 @@ def catCart():
         goods=cart.goods                            #获取购物车的所有商品
         goods_list=[]
         for good in goods:
-            goods_list.append(good.to_dic())
+            gods = db.session.query(cart_goods_middle).filter_by(cart_id=cart.id, goods_id=goods.id).first()
+            goods_list.append(good.to_dic().update({'number':gods.number}))
+
         return jsonify({'code':200,'message':goods_list})
     else:
         cart=CartModel(user_id=user.id)

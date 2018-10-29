@@ -29,7 +29,7 @@ class Verify_regist(Form):                                         #前台用户
 
 class Verify_login(Form):                                            #前台用户账号密码登录验证
     mobile=StringField(validators=[Regexp(r'^1(3|4|5|7|8)\d{9}$',message='手机号码输入错误')])
-    password=StringField(validators=[Regexp(r'\w{6,16}',message='密码个数输入不正确')])
+    password=StringField(validators=[Regexp(r'\w{6,16}',message='密码输入不正确')])
 
 
 

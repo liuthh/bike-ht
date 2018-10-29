@@ -1,9 +1,9 @@
 '''数据库连接配置'''
 host='127.0.0.1'
 username='root'
-passwd='12345678'
+passwd=''
 db='bike'
-port=3306
+port=3307
 
 
 DB_URI='mysql+pymysql://{username}:{passwd}@{host}:{port}/{db}?charset=utf8' \
@@ -12,7 +12,7 @@ SQLALCHEMY_DATABASE_URI=DB_URI
 SQLALCHEMY_TRACK_MODIFICATIONS=False
 
 import os
-SECRET_KEY=os.urandom(24)     #加盐
+SECRET_KEY='fhdsfdhsfdksfjkdasjfldkas'     #加盐
 
 
 

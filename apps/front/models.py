@@ -4,7 +4,7 @@ from datetime import datetime
 import enum
 from werkzeug.security import generate_password_hash,check_password_hash
 
-
+# python manage.py db migrate              upgrade   映射数据库
 
 
 

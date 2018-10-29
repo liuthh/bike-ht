@@ -104,7 +104,7 @@ class GoodsModel(db.Model):       #商品表
         }
         return d
 
-Cart_Goods_Middle=db.Table('cart_goods_middle',                                     #购物车商品中间表
+cart_goods_middle=db.Table('cart_goods_middle',                                     #购物车商品中间表
                            db.Column('goods_id',db.Integer,db.ForeignKey('goods.id'),primary_key=True),
                            db.Column('cart_id',db.Integer,db.ForeignKey('cart.id'),primary_key=True),
                            db.Column('number',db.Integer,default=1)
@@ -117,7 +117,7 @@ class CartModel(db.Model):                                                      
     user_id=db.Column(db.String(200),db.ForeignKey('user.id'),nullable=False)      #用户外键
     create_time=db.Column(db.DateTime,default=datetime.now())                      #创建时间
     user=db.relationship('UserModel',backref=backref('cart',uselist=False))        #用户和购物车1对1关系
-    goods = db.relationship('GoodsModel', secondary=Cart_Goods_Middle, backref='carts')  # 和CMS表建立多对多的关系
+    goods = db.relationship('GoodsModel', secondary=cart_goods_middle, backref='carts')  # 和CMS表建立多对多的关系
 
 
 

@@ -3,7 +3,6 @@ from .forms import Verify_sendcode,Verify_SendLoginCode
 from utils.miaodi import sendIndustrySms
 from utils.memcached import mc
 import random
-
 bp=Blueprint('common',__name__,url_prefix='/common')
 
 @bp.route('/sendcode/',methods=['POST'])                    #发送短信验证码，注册短信api
@@ -21,7 +20,7 @@ def sendcode():
         print(code)
         smsContent='【爱家社区】您的验证码为{0}，请于5分钟内正确输入，如非本人操作，请忽略此短信。'.format(code)
         sendIndustrySms(mobble,smsContent)
-        mc.set(mobble,code,300000)             #把短信验证码存放在memcached里面
+        mc.set(mobble,code,300)             #把短信验证码存放在memcached里面
         print(mc.get(mobble))
         return jsonify({'code':200,'message':'发送成功'})
     else:

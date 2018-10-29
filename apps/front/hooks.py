@@ -7,7 +7,8 @@ import config
 def beforerequest():
     if config.User in session:
         user_id=session.get(config.User)
+        print(user_id)
+        print('hhh')
         front_user=UserModel.query.get(user_id)
         if front_user:
             g.front_user=front_user
-

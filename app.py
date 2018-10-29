@@ -16,7 +16,5 @@ db.init_app(app=app)
 flask_cors.CORS(app, supports_credentials=True)   #解决跨域问题
 
 
-
-
 if __name__ == '__main__':
     app.run()

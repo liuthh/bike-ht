@@ -1,6 +1,8 @@
 import json
 import random
 import config
+from .pymysql_ import *
+
 from flask import (
                     Blueprint,
                     request,
@@ -26,7 +28,7 @@ from apps.models import (
                          OrderModel,
                          CartModel,
                          PostModel,
-                         Cart_Goods_Middle
+                         cart_goods_middle
                          )
 from exts import db
 from .models import UserModel
@@ -312,7 +314,6 @@ def aCart():
     '''
     form=Verify_aCart(request.form)
     if form:
-        number=1                                                        #默认加入购物车商品1件
         goods_id=form.goods_id.data
         user=g.front_user
         goods=GoodsModel.query.filter_by(id=goods_id).first()          #查询是否有这件商品
@@ -320,16 +321,36 @@ def aCart():
             cart1=CartModel.query.filter_by(user_id=user.id).first()   #查询用户是否有购物车
             if cart1:
                 if CartModel.query.filter_by(user_id=user.id,goods_id=goods.id).first():
-                    goods=Cart_Goods_Middle.query.filter_by(user_id=user.id,goods_id=goods.id).first()
-                    goods.number+=1
-                    db.session.commit()
+
+
+                    # goods=db.session.query(cart_goods_middle).filter_by(cart_id=cart1.id,goods_id=goods.id).first()
+                    # print(11,goods)
+                    # goods.update({cart_goods_middle.number:1})
+                    '''
+                    SELECT cart_goods_middle.goods_id AS cart_goods_middle_goods_id, cart_goods_middle.cart_id AS cart_goods_middle_cart_id, cart_goods_middle.number AS cart_goods_middle_number 
+FROM cart_goods_middle 
+WHERE cart_goods_middle.cart_id = %(cart_id_1)s AND cart_goods_middle.goods_id = %(goods_id_1)s
+                    
+                    '''
+                    # print(goods.number)
+                    # print(type(goods.number))
+                    # print(goods.number)
+                    # goods.number=1
+                    # print("------------")
+                    # goods.number+=1
+                    # print('1232')
+                    sql = "UPDATE cart_goods_middle SET number =number+1 WHERE cart_id ={} and goods_id={}".format(cart1.id,goods.id)
+                    res = cur.execute(sql)  # 执行sql语句
+                    print(res)
+                    dbMy.commit()
+                    # db.session.commit()
                     return jsonify({'code':200,'message':'商品数量加1'})
                 else:
                     cart1.goods.append(goods)
                     db.session.commit()
                     return jsonify({'code':201,'message':'添加购物车成功'})
             else:
-                cart = CartModel(number=number)
+                cart = CartModel()
                 cart.user=user
                 cart.user_id=user.id
                 cart.goods_id = goods.id

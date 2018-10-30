@@ -70,7 +70,7 @@ class OrderModel(db.Model):                                         #订单模�
     goods_id=db.Column(db.Integer,db.ForeignKey('goods.id'),nullable=False)             #商品ID
 
 
-    address=db.relationship('AddressModel',backref=backref('indent',uselist=False))
+    address=db.relationship('AddressModel',backref='orders')
     good=db.relationship('GoodsModel',backref='orders')
     user=db.relationship('UserModel',backref='orders')
 

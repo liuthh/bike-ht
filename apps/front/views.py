@@ -193,7 +193,7 @@ def getSpDetial():
 
 
 @bp.route('/genarateOrder/',methods=['POST','GET'])             #生成订单
-@RequestLogin
+# @RequestLogin
 def genarateOrder():
     '''
     :param:    商品的id(good_id)
@@ -207,7 +207,6 @@ def genarateOrder():
             good=GoodsModel.query.get(good_id)
             good_dic=good.to_dic()
             user=g.front_user
-            # user=UserModel.query.get(1)                  #测试数据
             addresses=user.addresses
             addresses_dic=[]                        #用户的所有地址
             for address in addresses:
@@ -223,30 +222,24 @@ def genarateOrder():
                    code  411   没有数据库未找到
                    code  200   返回该商品信息(set)    返回当前用户的所有地址(list)
         '''
-        print('ok')
         form=Verify_GenerateOrder(request.form)
         if form.validate():
-            print('123')
-            number=form.number.data
-            price=form.price.data
-            good_id=form.good_id.data
-            address=form.address_id.data
-            # user=g.front_user
-            user=UserModel.query.get(1)                  #测试数据
-            print(1)
+            number=form.number.data                 #商品数量
+            price=form.price.data                   #商品价格
+            good_id=form.good_id.data               #商品id
+            address=form.address_id.data            #订单地址
+            user=g.front_user                       #用户
             good=GoodsModel.query.filter_by(id=good_id).first()     #商品对象
             if good:
                 address=AddressModel.query.filter_by(id=address).first()
                 if address:
-                    id=random.randrange(100000000000,999999999999)  #随机生成12位订单号
+                    id=random.randrange(100000000,999999999)  #随机生成12位订单号
+                    print(id)
                     order=OrderModel(id=id,number=number,good_price=price)
-                    print(1)
                     order.address=address
                     order.good=good
                     order.user=user
-                    print(2)
                     db.session.add(order)
-                    print(order)
                     db.session.commit()
                     order=order.to_dic()
                     return jsonify({'code':'200','message':'生成订单成功','order':order})
@@ -258,7 +251,7 @@ def genarateOrder():
             message=form.errors.popitem()[0][1]                     #弹出表单验证第一条出错信息
             return jsonify({'code':412,'message':message})
 
-@bp.route('/personal/',methods=['GET'])                                           #个人中心
+@bp.route('/personal/',methods=['GET'])                             #个人信息                                     #个人中心
 @RequestLogin
 def personal():
     '''
@@ -272,14 +265,14 @@ def personal():
 
 
 
-@bp.route('/delogin/')                                                              #注销登录
+@bp.route('/delogin/')                              #注销登录                                                           #注销登录
 @RequestLogin
 def delogin():
     del session[config.User]
     return jsonify({'code':200,'message':'注销成功'})
 
 
-@bp.route('/reSetPasswd/',methods=['POST'])                                          #修改密码
+@bp.route('/reSetPasswd/',methods=['POST'])         #修改密码                                      #修改密码
 @RequestLogin
 def reSetPasswd():
     '''
@@ -448,7 +441,7 @@ def catCart():
     
     
 
-@bp.route('/referOrder/',methods=['POST'])                  # 提交订单
+@bp.route('/referOrder/',methods=['POST'])                  # 支付订单
 @RequestLogin
 def referOrder():
     '''
@@ -482,6 +475,10 @@ def referOrder():
 
 
 
+# 我的订单
+@bp.route('/myOrder/',methods=['GET'])
+def myOrder():
+    pass
 
 
 

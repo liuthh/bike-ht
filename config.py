@@ -1,9 +1,15 @@
+# '''数据库连接配置'''
+# host='127.0.0.1'
+# username='root'
+# passwd=''
+# db='bike'
+# port=3307
 '''数据库连接配置'''
 host='127.0.0.1'
 username='root'
-passwd=''
+passwd='12345678'
 db='bike'
-port=3307
+port=3306
 
 
 DB_URI='mysql+pymysql://{username}:{passwd}@{host}:{port}/{db}?charset=utf8' \

@@ -2,7 +2,7 @@ import pymysql  # 导入 pymysql
 
 # 打开数据库连接
 dbMy = pymysql.connect(host="localhost", user="root",
-                     password="", db="bike", port=3307)
+                     password="12345678", db="bike", port=3306)
 
 # 使用cursor()方法获取操作游标
 cur = dbMy.cursor()

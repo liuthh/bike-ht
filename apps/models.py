@@ -75,15 +75,26 @@ class OrderModel(db.Model):                                         #订单模�
     user=db.relationship('UserModel',backref='orders')
 
     def to_dic(self):
+        if self.status==StatusEnum.WAIT_PAY:
+            status='待支付'
+        elif self.status==StatusEnum.PAID:
+            status='已支付'
+        elif self.status==StatusEnum.WAIT_COMMENT:
+            statue='😳评论'
+        elif self.status==StatusEnum.COMPLETE:
+            status='已完成'
+        elif self.status==StatusEnum.CANCEL:
+            status='已取消'
         d={
             'id':self.id,
             'number':self.number,
             'goods_price':self.good_price,
-            'status':self.status,
+            'status':status,
             'create_time':self.create_time,
             'remark':self.remark,
             'goodsName':self.good.title,
         }
+        return d
 
 class GoodsModel(db.Model):                                 #商品表
     __tablename__='goods'

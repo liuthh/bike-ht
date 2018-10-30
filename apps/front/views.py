@@ -193,7 +193,7 @@ def getSpDetial():
 
 
 @bp.route('/genarateOrder/',methods=['POST','GET'])             #生成订单
-# @RequestLogin
+@RequestLogin
 def genarateOrder():
     '''
     :param:    商品的id(good_id)
@@ -368,7 +368,7 @@ def delGoods():
                 res = cur.execute(sql)  # 执行sql语句
                 dbMy.commit()
                 return jsonify({'code':202,'message':'商品减1成功'})
-        else:
+        elif types==0:
             del cart
             db.session.commit()
             return jsonify({'code':200,'message':'删除商品成功'})
@@ -475,10 +475,19 @@ def referOrder():
 
 
 
-# 我的订单
-@bp.route('/myOrder/',methods=['GET'])
+@bp.route('/myOrder/',methods=['GET'])                      # 我的订单
+@RequestLogin                                               # 必须登录
 def myOrder():
-    pass
+    user=g.front_user                                       #获取当前用户
+    orders=OrderModel.query.filter_by(user_id=user.id).all()#查找当前用户所有订单
+    order_dic=[]
+    for order in orders:                                    #转换成字典返回给前端
+        d=order.to_dic()
+        print(d)
+        order_dic.append(d)
+    print(order_dic)
+    return jsonify({'code':200,'message':order_dic})
+
 
 
 

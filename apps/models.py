@@ -50,12 +50,12 @@ class AddressModel(db.Model):        #收货地址模型
 class StatusEnum(enum.Enum):                                        #订单状态枚举类
     WAIT_PAY=1      #未付款
     PAID=2          #已支付
-    WAIT_COMMENT=3  #已评论
+    WAIT_COMMENT=3  #代评论
     COMPLETE=4      #已完成
     CANCEL=5        #已取消
 
 
-class OrderModel(db.Model):
+class OrderModel(db.Model):                                         #订单模型
     __tablename__='order'
     id=db.Column(db.Integer,primary_key=True,nullable=False)                            #订单编号
     number=db.Column(db.Integer,nullable=False)                                         #商品的数量
@@ -74,7 +74,18 @@ class OrderModel(db.Model):
     good=db.relationship('GoodsModel',backref='orders')
     user=db.relationship('UserModel',backref='orders')
 
-class GoodsModel(db.Model):       #商品表
+    def to_dic(self):
+        d={
+            'id':self.id,
+            'number':self.number,
+            'goods_price':self.good_price,
+            'status':self.status,
+            'create_time':self.create_time,
+            'remark':self.remark,
+            'goodsName':self.good.title,
+        }
+
+class GoodsModel(db.Model):                                 #商品表
     __tablename__='goods'
     id=db.Column(db.Integer,primary_key=True,autoincrement=True,nullable=False)
     title=db.Column(db.String(100),nullable=False)                                  #标题

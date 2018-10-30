@@ -2,7 +2,6 @@ import json
 import random
 import config
 from .pymysql_ import *
-
 from flask import (
                     Blueprint,
                     request,
@@ -20,7 +19,8 @@ from .forms import (
                     Verify_GenerateOrder,
                     Verify_aCart,
                     Verify_dCart,
-                    Verify_apost
+                    Verify_apost,
+                    Verify_refer_Verify
                     )
 from apps.models import (
                          GoodsModel,
@@ -28,7 +28,9 @@ from apps.models import (
                          OrderModel,
                          CartModel,
                          PostModel,
-                         cart_goods_middle
+                         cart_goods_middle,
+                         OrderModel,
+                         StatusEnum
                          )
 from exts import db
 from .models import UserModel
@@ -246,7 +248,8 @@ def genarateOrder():
                     db.session.add(order)
                     print(order)
                     db.session.commit()
-                    return jsonify({'code':'200','message':'生成订单成功','id':id})
+                    order=order.to_dic()
+                    return jsonify({'code':'200','message':'生成订单成功','order':order})
                 else:
                     return jsonify({'code':411,'message':'地址传参错误'})
             else:
@@ -323,7 +326,6 @@ def aCart():
                 if CartModel.query.filter_by(user_id=user.id,goods_id=goods.id).first():
                     sql = "UPDATE cart_goods_middle SET number =number+1 WHERE cart_id ={} and goods_id={}".format(cart1.id,goods.id)
                     res = cur.execute(sql)  # 执行sql语句
-                    print(res)
                     dbMy.commit()
                     return jsonify({'code':200,'message':'商品数量加1'})
                 else:
@@ -349,7 +351,7 @@ def aCart():
 @RequestLogin
 def delGoods():
     '''
-    :param: 商品id(good_id)    1表示删除商品 0表示商品减1（types）
+    :param: 商品id(good_id)    0表示删除商品 1表示商品减1（types）
     :return:
             code 201    商品数量只剩下1
             code 202    商品-1成功
@@ -358,26 +360,25 @@ def delGoods():
             code 412    表单验证失败
     '''
     form=Verify_dCart(request.form)
-    if form:
+    if form.validate():
         goods_id=form.goods_id.data
         types=form.types.data
         user_id=g.front_user.id
-        cart=CartModel.query.filter_by(goods_id=goods_id,user_id=user_id).first() #查询购物车的这个商品
-        if cart:
-            if types==1:
-                count=cart.number
-                if count<=1:
-                    return jsonify({'code':201,'message':'购物车商品只剩下1'})
-                else:
-                    cart.number-=1
-                    db.session.commit()
-                    return jsonify({'code':202,'message':'商品减1成功'})
+        cart=CartModel.query.filter_by(user_id=user_id).first()
+        gods = db.session.query(cart_goods_middle).filter_by(cart_id=cart.id, goods_id=goods_id).first()
+        if types==1:
+            count=gods.number
+            if count<=1:
+                return jsonify({'code':201,'message':'购物车商品只剩下1'})
             else:
-                del cart
-                db.session.commit()
-                return jsonify({'code':200,'message':'删除商品成功'})
+                sql = "UPDATE cart_goods_middle SET number =number-1 WHERE cart_id ={} and goods_id={}".format(cart.id,goods_id)  # 查询购物车的这个商品
+                res = cur.execute(sql)  # 执行sql语句
+                dbMy.commit()
+                return jsonify({'code':202,'message':'商品减1成功'})
         else:
-            return jsonify({'code':411,'message':'购物车中不存在该商品'})
+            del cart
+            db.session.commit()
+            return jsonify({'code':200,'message':'删除商品成功'})
     else:
         message = form.errors.popitem()[0][1]                       # 弹出表单验证失败第一条错误信息
         return jsonify({'code': 412, 'message': message})
@@ -431,16 +432,53 @@ def catCart():
         goods=cart.goods                            #获取购物车的所有商品
         goods_list=[]
         for good in goods:
-            gods = db.session.query(cart_goods_middle).filter_by(cart_id=cart.id, goods_id=goods.id).first()
-            goods_list.append(good.to_dic().update({'number':gods.number}))
-
+            gods = db.session.query(cart_goods_middle).filter_by(cart_id=cart.id, goods_id=good.id).first()
+            d={'number':gods.number}
+            a=good.to_dic()
+            a.update(d)
+            goods_list.append(a)
+        print(goods_list)
         return jsonify({'code':200,'message':goods_list})
     else:
         cart=CartModel(user_id=user.id)
         db.session.add(cart)
         db.session.commit()
         return jsonify({'code':201,'message':'购物车空'})
+    
+    
+    
 
+@bp.route('/referOrder/',methods=['POST'])                  # 提交订单
+@RequestLogin
+def referOrder():
+    '''
+    :param: passwd(用户密码)，order_code(订单编号)
+    :return:
+             200 成功
+             414 余额不足
+             413 密码错误
+             412 表单验证错误
+    '''
+    form=Verify_refer_Verify(request.form)
+    if form.validate():
+        passwd=form.passwd.data
+        order_code=form.order_code.data
+        user=g.front_user
+        if user.check_passwd(passwd=passwd):
+            order=OrderModel.query.get(order_code)
+            price=order.good_price*order.number
+            if user.money>=price:
+                user.money-=price
+                order.status=StatusEnum.PAID
+                db.session.commit()
+                return jsonify({'code':200,'message':'支付成功'})
+            else:
+                return jsonify({'code':414,'message':'余额不足'})
+        else:
+            return jsonify({'code':413,'message':'密码错误'})
+    else:
+        message=form.errors.popitem()[0][1]
+        return jsonify({'code':412,'message':message})
 
 
 

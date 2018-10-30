@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash,check_password_hash
 
 
 
-class GenderEnum(enum.Enum):   #构造了个性别枚举类
+class GenderEnum(enum.Enum):   #构造性别枚举类
     man=1
     woman=2
     secret=3
@@ -33,6 +33,20 @@ class UserModel(db.Model):                      #用户表
             self.passwd=passwd
             kwargs.pop('passwd')  #删除这个passwd
         super(UserModel, self).__init__(*args,**kwargs)    #剩下的内容交个父类处理
+
+
+    def to_dic(self):
+        d={
+            'id':self.id,
+            'username':self.username,
+            'mobile':self.mobile,
+            'avatar':self.avatar,
+            'personal_introduction':self.personal_introduction,
+            'gender':self.gender,
+            'create_time':self.create_time,
+            'money':self.money
+        }
+        return d
 
 
 

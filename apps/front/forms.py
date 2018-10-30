@@ -1,6 +1,7 @@
 from wtforms import Form,StringField,IntegerField
 from wtforms.validators import Length,Regexp,EqualTo,ValidationError,InputRequired
 from utils.memcached import mc
+from apps.models import OrderModel
 from .models import UserModel
 from flask import g
 
@@ -78,6 +79,13 @@ class Verify_apost(Form):                                                #添加
         if not code and img_code!=code:
             raise ValidationError(message='验证码输入不正确')
 
+class Verify_refer_Verify(Form):
+    order_code=IntegerField(validators=[Regexp(r'.{12}',message='订单编号错误')])
+    passwd=StringField(InputRequired(message='请输入密码'))
+    def validate_order_code(self,field):
+        orderCode=OrderModel.query.filter_by(id=field.data).first()
+        if not orderCode:
+            raise ValidationError(message='该订单不存在')
 
 
 

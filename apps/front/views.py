@@ -33,7 +33,7 @@ from apps.models import (
                          cart_goods_middle,
                          OrderModel,
                          StatusEnum,
-                         GoodsT_Model
+                         GoodsT_Model,
                          )
 from exts import db
 from .models import UserModel
@@ -537,7 +537,19 @@ def MyAddress():
         addresses_dic.append(address.to_dic())
     return jsonify({'code':200,'message':addresses_dic})
 
-
+@bp.route('/delAddress/',methods=['POST'])                                                                             #删除地址
+@RequestLogin
+def delAddress():
+    address_id=request.form.get('rcAddress_id')
+    user=g.front_user
+    addresses=user.addresses
+    for address in addresses:
+        if address.id==address_id:
+            address=AddressModel.query.get(address.id)
+            del address
+            db.session.commit()
+            return jsonify({'code':200,'message':'删除成功'})
+    return jsonify({'code':404,'message':'该地址不存在或者已经被删除'})
 
 @bp.route('/aAddress/',methods=['POST'])                                                               #添加地址
 @RequestLogin

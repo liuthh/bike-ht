@@ -129,48 +129,58 @@ def searchShop():
                 shops_dic=[]
                 for shop in shops:
                     shops_dic.append(shop.to_dic())
-                shops_dic=shops_dic.append(count)
-                return jsonify(code=200,message=shops_dic)
+                return jsonify({'code':200,'message':shops_dic,'page':count})
             else:
                 return jsonify({'code':201,'message':'没有找到您搜索的商品'})
         elif sort==2:
             shops=GoodsModel.query.order_by(GoodsModel.price.desc()).filter(GoodsModel.title.like(content)).slice(start,end).all()
             if shops:
+                count = GoodsModel.query.filter(GoodsModel.title.like(content)).count()
+                page = math.ceil(count / 8.0)
+                count = {'page': page}
                 shops_dic=[]
                 for shop in shops:
                     shops_dic.append(shop.to_dic())
-                return jsonify(code=200,message=shops_dic)
+                return jsonify({'code':200,'message':shops_dic,'page':count})
+
             else:
                 return jsonify({'code':201,'message':'没有找到您搜索的商品'})
         elif sort==3:
             shops = GoodsModel.query.order_by(GoodsModel.sales.asc()).filter(GoodsModel.title.like(content)).slice(start,end).all()
             if shops:
+                count = GoodsModel.query.filter(GoodsModel.title.like(content)).count()
+                page = math.ceil(count / 8.0)
+                count = {'page': page}
                 shops_dic = []
                 for shop in shops:
                     shops_dic.append(shop.to_dic())
-                return jsonify(code=200, message=shops_dic)
+                return jsonify({'code':200,'message':shops_dic,'page':count})
             else:
                 return jsonify({'code': 201, 'message': '没有找到您搜索的商品'})
 
     else:                                                                   #没有接受搜索条件
+        count = GoodsModel.query.count()
+        page = math.ceil(count / 8.0)
+        print(page)
+        count = {'page': page}
         if sort==1:
             shops=GoodsModel.query.order_by(GoodsModel.create_time.desc()).slice(start,end).all()
             shops_dic=[]
             for shop in shops:
                 shops_dic.append(shop.to_dic())
-            return jsonify({'code':202,'message':shops_dic})
+            return jsonify({'code':202,'message':shops_dic,'page':count})
         elif sort==2:
             shops=GoodsModel.query.order_by(GoodsModel.price.desc()).slice(start,end).all()
             shops_dic = []
             for shop in shops:
                 shops_dic.append(shop.to_dic())
-            return jsonify({'code': 202, 'message': shops_dic})
+            return jsonify({'code': 202, 'message': shops_dic,'page':count})
         elif sort==3:
             shops = GoodsModel.query.order_by(GoodsModel.Sales.asc()).slice(start,end).all()
             shops_dic = []
             for shop in shops:
                 shops_dic.append(shop.to_dic())
-            return jsonify({'code': 202, 'message': shops_dic})
+            return jsonify({'code': 202, 'message': shops_dic,'page':count})
 
 
 
@@ -309,7 +319,7 @@ def reSetPasswd():
 @RequestLogin
 def aCart():
     '''
-    :param:  goods_id(商品id)
+    :param:  goods_id(商品id),number(商品数量)
     :return: code  200    加入购物车成功
              code  411    该商品不存在或者已经下架
              code  412    表单验证失败
@@ -318,13 +328,14 @@ def aCart():
     form=Verify_aCart(request.form)
     if form:
         goods_id=form.goods_id.data
+        number=form.number.data
         user=g.front_user
         goods=GoodsModel.query.filter_by(id=goods_id).first()          #查询是否有这件商品
         if goods:
             cart1=CartModel.query.filter_by(user_id=user.id).first()   #查询用户是否有购物车
             if cart1:
                 if CartModel.query.filter_by(user_id=user.id,goods_id=goods.id).first():
-                    sql = "UPDATE cart_goods_middle SET number =number+1 WHERE cart_id ={} and goods_id={}".format(cart1.id,goods.id)
+                    sql = "UPDATE cart_goods_middle SET number =number+{} WHERE cart_id ={} and goods_id={}".format(number,cart1.id,goods.id)
                     res = cur.execute(sql)  # 执行sql语句
                     dbMy.commit()
                     return jsonify({'code':200,'message':'商品数量加1'})

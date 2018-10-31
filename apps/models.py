@@ -129,10 +129,19 @@ class GoodsModel(db.Model):                                 #商品表
         }
         return d
 
-class GoodsT_Model(db.Model): #商品类型表
+class GoodsMT_Model(db.Model):                      #最大商品类型表类型
+    __tablename__='goods_max_type'
+    id=db.Column(db.Integer,primary_key=True,autoincrement=True)
+    name=db.Column(db.String(50),nullable=False)
+
+class GoodsT_Model(db.Model):                       #商品类型表
     __tablename__='goods_type'
     id=db.Column(db.Integer,primary_key=True,autoincrement=True)
     name=db.Column(db.String(50),nullable=False)    #商品名称
+    goodsMt_id=db.Column(db.Integer,db.ForeignKey('goods_max_type.id'))
+
+    type=db.relationship('GoodsMT_Model',backref='types')
+
 
 
 cart_goods_middle=db.Table('cart_goods_middle',                                     #购物车商品中间表

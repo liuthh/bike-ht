@@ -80,12 +80,9 @@ class Verify_apost(Form):                                                #添加
             raise ValidationError(message='验证码输入不正确')
 
 class Verify_refer_Verify(Form):
-    order_code=IntegerField(validators=[Regexp(r'.{12}',message='订单编号错误')])
+    order_code=IntegerField(validators=[InputRequired(message='请输入订单编号')])
     passwd=StringField(InputRequired(message='请输入密码'))
-    def validate_order_code(self,field):
-        orderCode=OrderModel.query.filter_by(id=field.data).first()
-        if not orderCode:
-            raise ValidationError(message='该订单不存在')
+
 
 
 

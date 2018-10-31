@@ -108,6 +108,9 @@ class GoodsModel(db.Model):                                 #商品表
     Sales=db.Column(db.Integer,default=0)                                           #销量
     stock=db.Column(db.Integer,default=0,nullable=False)                            #库存
     main_img=db.Column(db.String(255))                                              #主图片
+    type_id=db.Column(db.Integer,db.ForeignKey('goods_type.id'))
+
+    type=db.relationship('GoodT_Model',backref='goods')
 
 
 
@@ -125,6 +128,12 @@ class GoodsModel(db.Model):                                 #商品表
             'stock':self.stock
         }
         return d
+
+class GoodsT_Model(db.Model): #商品类型表
+    __tablename__='goods_type'
+    id=db.Column(db.Integer,primary_key=True,autoincrement=True)
+    name=db.Column(db.String(50),nullable=False)    #商品名称
+
 
 cart_goods_middle=db.Table('cart_goods_middle',                                     #购物车商品中间表
                            db.Column('goods_id',db.Integer,db.ForeignKey('goods.id'),primary_key=True),

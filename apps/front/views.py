@@ -30,7 +30,8 @@ from apps.models import (
                          PostModel,
                          cart_goods_middle,
                          OrderModel,
-                         StatusEnum
+                         StatusEnum,
+                         GoodsT_Model
                          )
 from exts import db
 from .models import UserModel
@@ -487,6 +488,38 @@ def myOrder():
         order_dic.append(d)
     print(order_dic)
     return jsonify({'code':200,'message':order_dic})
+
+
+
+@bp.route('/getTypeGoods/',methods=['GET'])                                             #获取指定类型商品
+def getTypeGoods():
+    '''
+    :param:  type_id
+    :return:
+    '''
+    type_id=request.args.get('type_id')
+    type=GoodsT_Model.query.filter_by(id=type_id).first()
+    if type:
+        goods=type.goods
+        goods_dic=[]
+        for shop in goods:
+            goods_dic.append(shop.to_dic())
+        return jsonify({'code':200,'message':goods_dic})
+    else:
+        return jsonify({'code':412,'message':'不存在该类型商品'})
+
+
+
+@bp.route('/MyAddress/')                                                                #我的地址
+@RequestLogin
+def MyAddress():
+    user=g.front_user
+    addresses=user.addresses
+    addresses_dic=[]
+    for address in addresses:
+        addresses_dic.append(address.to_dic())
+    return jsonify({'code':200,'message':addresses_dic})
+    
 
 
 

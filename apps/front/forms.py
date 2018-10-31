@@ -85,6 +85,13 @@ class Verify_refer_Verify(Form):
 
 
 
+class Verify_aAddress(Form):
+    mobile=StringField(validators=[Regexp(r'^1(3|4|5|7|8)\d{9}$',message='手机号码输入错误')])
+    name=StringField(validators=[InputRequired(message='请输入收货人姓名')])
+    address=StringField(validators=[InputRequired(message='请输入收货地址')])
+
+
+
 
 
 

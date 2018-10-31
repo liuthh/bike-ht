@@ -103,14 +103,14 @@ class GoodsModel(db.Model):                                 #商品表
     brand=db.Column(db.String(100),nullable=False)                                  #品牌
     price=db.Column(db.Integer,nullable=False)                                      #价格
     create_time=db.Column(db.DateTime,default=datetime.now(),nullable=False)        #价格
-    intr=db.Column(db.Text)                                          #商品简介
+    intr=db.Column(db.Text)                                                         #商品简介
     color=db.Column(db.String(10),nullable=False)                                   #商品颜色
     Sales=db.Column(db.Integer,default=0)                                           #销量
     stock=db.Column(db.Integer,default=0,nullable=False)                            #库存
     main_img=db.Column(db.String(255))                                              #主图片
     type_id=db.Column(db.Integer,db.ForeignKey('goods_type.id'))
 
-    type=db.relationship('GoodT_Model',backref='goods')
+    type=db.relationship('GoodsT_Model',backref='goods')
 
 
 

@@ -1,6 +1,7 @@
 import json
 import random
 import config
+import math
 from .pymysql_ import *
 from flask import (
                     Blueprint,
@@ -20,7 +21,8 @@ from .forms import (
                     Verify_aCart,
                     Verify_dCart,
                     Verify_apost,
-                    Verify_refer_Verify
+                    Verify_refer_Verify,
+                    Verify_aAddress
                     )
 from apps.models import (
                          GoodsModel,
@@ -121,9 +123,13 @@ def searchShop():
         if sort==1:
             shops=GoodsModel.query.order_by(GoodsModel.create_time.desc()).filter(GoodsModel.title.like(content)).slice(start,end).all()
             if shops:
+                count=GoodsModel.query.filter(GoodsModel.title.like(content)).count()
+                page=math.ceil(count/8.0)
+                count={'page':page}
                 shops_dic=[]
                 for shop in shops:
                     shops_dic.append(shop.to_dic())
+                shops_dic=shops_dic.append(count)
                 return jsonify(code=200,message=shops_dic)
             else:
                 return jsonify({'code':201,'message':'没有找到您搜索的商品'})
@@ -471,7 +477,7 @@ def referOrder():
         else:
             return jsonify({'code':413,'message':'密码错误'})
     else:
-        message=form.errors.popitem()[0][1]
+        message=form.errors.popitem()[1][0]
         return jsonify({'code':412,'message':message})
 
 
@@ -510,7 +516,7 @@ def getTypeGoods():
 
 
 
-@bp.route('/MyAddress/')                                                                #我的地址
+@bp.route('/MyAddress/',methods=['GET'])                                                                #我的地址
 @RequestLogin
 def MyAddress():
     user=g.front_user
@@ -519,7 +525,30 @@ def MyAddress():
     for address in addresses:
         addresses_dic.append(address.to_dic())
     return jsonify({'code':200,'message':addresses_dic})
-    
+
+
+
+@bp.route('/aAddress/',methods=['POST'])                                                               #添加地址
+@RequestLogin
+def aAddress():
+    '''
+    :param:  mobile(手机号), name（收货人姓名），address 收货地址
+    :return:
+    '''
+    form =Verify_aAddress(request.form)
+    if form.validate():
+        mobile=form.mobile.data
+        name=form.name.data
+        address=form.address.data
+        user = g.front_user
+        newaddress=AddressModel(user_id=user.id,rcMobile=mobile,rcName=name,rcAddress=address)
+        db.session.add(newaddress)
+        db.session.commit()
+        return jsonify({'code':200,'message':'添加新地址成功'})
+    else:
+        message = form.errors.popitem()[1][0]
+        return jsonify({'code': 412, 'message': message})
+
 
 
 

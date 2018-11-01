@@ -27,7 +27,7 @@ class GoodsImgModel(db.Model):      #商品图片表
 
 class AddressModel(db.Model):        #收货地址模型
     __tablename__='rcaddress'        #receive address(收货地址)
-    user_id=db.Column(db.String(100),db.ForeignKey('user.id'),nullable=False,ondelete='CASCADE')#用户id外键
+    user_id=db.Column(db.String(100),db.ForeignKey('user.id'))#用户id外键
 
 
     id=db.Column(db.Integer,nullable=False,autoincrement=True,primary_key=True)
@@ -35,8 +35,7 @@ class AddressModel(db.Model):        #收货地址模型
     rcName=db.Column(db.String(50),nullable=False)                          #收货人名称
     rcAddress=db.Column(db.String(200),nullable=False)                      #收货地址
 
-    user=db.relationship('UserModel',backref='addresses',cascade="all, delete-orphan",
-                    passive_deletes=True)
+    user=db.relationship('UserModel',backref='addresses',cascade="save-update")
 
     def to_dic(self):
         d={

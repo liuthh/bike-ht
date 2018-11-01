@@ -537,7 +537,7 @@ def MyAddress():
         addresses_dic.append(address.to_dic())
     return jsonify({'code':200,'message':addresses_dic})
 
-@bp.route('/delAddress/',methods=['POST'])                                                                             #删除地址
+@bp.route('/delAddress/',methods=['POST'])                                                            #删除地址
 @RequestLogin
 def delAddress():
     address_id=request.form.get('rcAddress_id')
@@ -571,6 +571,8 @@ def aAddress():
     else:
         message = form.errors.popitem()[1][0]
         return jsonify({'code': 412, 'message': message})
+
+
 
 
 

@@ -538,14 +538,11 @@ def MyAddress():
     return jsonify({'code':200,'message':addresses_dic})
 
 @bp.route('/delAddress/',methods=['POST'])                                                            #删除地址
-# @RequestLogin
+@RequestLogin
 def delAddress():
     address_id=request.form.get('rcAddress_id')
-    # user=g.front_user
-    user=UserModel.query.get(1)
+    user=g.front_user
     addresses=user.addresses
-    print(address_id)
-    print(type(address_id))
     address_id=int(address_id)
     for address in addresses:
         if address.id==address_id:

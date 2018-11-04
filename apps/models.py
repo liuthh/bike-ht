@@ -125,7 +125,8 @@ class GoodsModel(db.Model):                                 #商品表
             'intr':self.intr,
             'color':self.color,
             'sales':self.Sales,
-            'stock':self.stock
+            'stock':self.stock,
+            'main_img':self.main_img
         }
         return d
 

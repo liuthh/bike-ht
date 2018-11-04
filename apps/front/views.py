@@ -4,13 +4,13 @@ import config
 import math
 from .pymysql_ import *
 from flask import (
-    Blueprint,
-    request,
-    render_template,
-    jsonify,
-    views,
-    session,
-    g
+            Blueprint,
+            request,
+            render_template,
+            jsonify,
+            views,
+            session,
+            g
 )
 from .forms import (
     Verify_regist,
@@ -167,7 +167,7 @@ def searchShop():
         print(page)
         count = {'page': page}
         if sort == 1:
-            shops = GoodsModel.query.order_by(GoodsModel.create_time.desc()).slice(start, end).all()
+            shops = GoodsModel.query.order_by(GoodsModel.create_time.asc()).slice(start, end).all()
             shops_dic = []
             for shop in shops:
                 shops_dic.append(shop.to_dic())

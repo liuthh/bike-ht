@@ -2,6 +2,8 @@ import json
 import random
 import config
 import math
+import uuid
+from qiniu import Auth
 from .pymysql_ import *
 from flask import (
             Blueprint,
@@ -22,7 +24,8 @@ from .forms import (
     Verify_dCart,
     Verify_apost,
     Verify_refer_Verify,
-    Verify_aAddress
+    Verify_aAddress,
+    Verify_upPersonal
 )
 from apps.models import (
     GoodsModel,
@@ -34,6 +37,7 @@ from apps.models import (
     OrderModel,
     StatusEnum,
     GoodsT_Model,
+    GoodsMT_Model,
 )
 from exts import db
 from .models import UserModel
@@ -148,7 +152,7 @@ def searchShop():
             else:
                 return jsonify({'code': 201, 'message': '没有找到您搜索的商品'})
         elif sort == 3:
-            shops = GoodsModel.query.order_by(GoodsModel.sales.asc()).filter(GoodsModel.title.like(content)).slice(
+            shops = GoodsModel.query.order_by(GoodsModel.sales.desc()).filter(GoodsModel.title.like(content)).slice(
                 start, end).all()
             if shops:
                 count = GoodsModel.query.filter(GoodsModel.title.like(content)).count()
@@ -164,7 +168,6 @@ def searchShop():
     else:  # 没有接受搜索条件
         count = GoodsModel.query.count()
         page = math.ceil(count / 8.0)
-        print(page)
         count = {'page': page}
         if sort == 1:
             shops = GoodsModel.query.order_by(GoodsModel.create_time.asc()).slice(start, end).all()
@@ -179,7 +182,7 @@ def searchShop():
                 shops_dic.append(shop.to_dic())
             return jsonify({'code': 202, 'message': shops_dic, 'page': count})
         elif sort == 3:
-            shops = GoodsModel.query.order_by(GoodsModel.Sales.asc()).slice(start, end).all()
+            shops = GoodsModel.query.order_by(GoodsModel.Sales.desc()).slice(start, end).all()
             shops_dic = []
             for shop in shops:
                 shops_dic.append(shop.to_dic())
@@ -249,7 +252,6 @@ def genarateOrder():
                 address = AddressModel.query.filter_by(id=address).first()
                 if address:
                     id = random.randrange(100000000, 999999999)  # 随机生成12位订单号
-                    print(id)
                     order = OrderModel(id=id, number=number, good_price=price)
                     order.address = address
                     order.good = good
@@ -328,7 +330,6 @@ def aCart():
         number = form.number.data
         user = g.front_user
         goods = GoodsModel.query.filter_by(id=goods_id).first()  # 查询是否有这件商品
-        print(goods_id,number,user,goods)
         if goods:
             cart1 = CartModel.query.filter_by(user_id=user.id).first()  # 查询用户是否有购物车
             if cart1:
@@ -368,18 +369,14 @@ def delGoods():
             code 411    购物车中不存在该商品
             code 412    表单验证失败
     '''
-    print(request.form)
     form = Verify_dCart(request.form)
     if form.validate():
         goods_id = form.good_id.data
         types = form.types.data
         user_id = g.front_user.id
-        print(goods_id,types)
         cart = CartModel.query.filter_by(user_id=user_id).first()
         gods = db.session.query(cart_goods_middle).filter_by(cart_id=cart.id, goods_id=goods_id).first()
-        print('1')
         if types == 1:
-            print(2)
             count = gods.number
             if count <= 1:
                 return jsonify({'code': 201, 'message': '购物车商品只剩下1'})
@@ -449,7 +446,6 @@ def catCart():
             a = good.to_dic()
             a.update(d)
             goods_list.append(a)
-        print(goods_list)
         return jsonify({'code': 200, 'message': goods_list})
     else:
         cart = CartModel(user_id=user.id)
@@ -499,9 +495,7 @@ def myOrder():
     order_dic = []
     for order in orders:  # 转换成字典返回给前端
         d = order.to_dic()
-        print(d)
         order_dic.append(d)
-    print(order_dic)
     return jsonify({'code': 200, 'message': order_dic})
 
 
@@ -512,13 +506,19 @@ def getTypeGoods():
     :return:
     '''
     type_id = request.args.get('type_id')
+    page = request.args.get('page', default=1)  # 当前页数
+    page = int(page)
+    start = (page - 1) * 8
+    end = start + 8
+    pages=0
     type = GoodsT_Model.query.filter_by(id=type_id).first()
     if type:
-        goods = type.goods
+        goods = GoodsModel.query.filter(GoodsModel.type_id==type.id).slice(start,end).all()
+        pages = GoodsModel.query.filter(GoodsModel.type_id == type.id).count()
         goods_dic = []
         for shop in goods:
             goods_dic.append(shop.to_dic())
-        return jsonify({'code': 200, 'message': goods_dic})
+        return jsonify({'code': 200, 'message': goods_dic,'page':pages})
     else:
         return jsonify({'code': 412, 'message': '不存在该类型商品'})
 
@@ -597,7 +597,6 @@ def genarateOrderAll():
             address = AddressModel.query.filter_by(id=address_id).first()
             if address:
                 id = random.randrange(100000000, 999999999)  # 随机生成12位订单号
-                print(id)
                 order = OrderModel(id=id, number=number, good_price=price)
                 order.address = address
                 order.good = good
@@ -623,9 +622,7 @@ def overOrder():
     order_id_all=json.loads(order_id_all1)[0]
     password=json.loads(order_id_all1)[1]
     price = 0
-    print(type(password))
     password=password['password']
-    print(password)
     for order_id in order_id_all:
         order_id = int(order_id)
         order = OrderModel.query.get(order_id)
@@ -645,15 +642,80 @@ def overOrder():
     else:
         return jsonify({'code':405,'message':'支付失败，密码错误'})
 
+@bp.route('/get_goods_type/',methods=['GET'])                                            #获取商品类型
+def get_goods_type():
+    types=[]
+    for i in range(1,4):
+        MT=GoodsMT_Model.query.filter_by(id=i).first()
+        sptypes=MT.types
+        type_name=[]
+        for sptype in sptypes:
+            sptype=sptype.to_dic()
+            type_name.append(sptype)
+        types.append(type_name)
+    return jsonify({'types':types})
+
+
+@bp.route('/upPersonal/',methods=['POST'])                                                               #修改个人资料
+@RequestLogin
+def upPersonal():
+    '''
+    :param:    username:(用户名)
+               email:（邮箱）
+               intr（简介）
+    :return:
+    '''
+    print(request.form)
+    form=Verify_upPersonal(request.form)
+    if form.validate():
+        username=form.username.data
+        email=form.email.data
+        intr=form.intr.data
+        user=g.front_user
+        user.Email=email
+        user.personal_introduction=intr
+        user.username=username
+        db.session.commit()
+        return jsonify({'code':200,'message':'修改成功'})
+    else:
+        message = form.errors.popitem()[1][0]
+        return jsonify({'code': 412, 'message': message})
 
 
 
 
+@bp.route('/qiniu/', methods=['GET'])                  #七牛云配置文件
+def qiniu():
+    try:
+        # 填写七牛云的密钥
+        access_key = "H23yW6b9whf42VT-eCaTxc4mHeRrOIhPtTbA1KNX"
+        secret_key = "teaFq7bSuo7oq3Sh_zy8aJR80H1xk0CPmJ8N3net"
+        # 构建健全对象
+        q = Auth(access_key, secret_key)
+        file = request.args.get("key")
+        # 要上传的空间
+        bucket_name = "boards"
+        # 上传到七牛后保存的文件名
+        key = str(uuid.uuid4()) + "." + file.split(".")[1]
+        # 生成上传的TOKEN,可以指定过期时间
+        token = q.upload_token(bucket_name, key, 3600)
+        return jsonify({"token": token, "filename": key})
+    except Exception as ex:
+        return jsonify({"code": "409"})
 
-
-
-
-
-
+# 将上传的文件名存储到数据库中
+@bp.route('/uploadimg/', methods=['POST'])                     #修改头像
+# @RequestLogin
+def uploadimg():
+    data = json.loads(request.data)
+    mobile=data['mobile']
+    user=UserModel.query.filter_by(mobile=mobile).first()
+    imgName = data["imagsname"]
+    try:
+        user.avatar=imgName
+        db.session.commit()
+        return jsonify({'code':200,'message':'修改成功'})
+    except Exception as ex:
+        return jsonify({"code": "403"})
 
 

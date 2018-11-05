@@ -1,5 +1,5 @@
 from wtforms import Form,StringField,IntegerField
-from wtforms.validators import Length,Regexp,EqualTo,ValidationError,InputRequired
+from wtforms.validators import Length,Regexp,EqualTo,ValidationError,InputRequired,Email
 from utils.memcached import mc
 from apps.models import OrderModel
 from .models import UserModel
@@ -93,7 +93,14 @@ class Verify_aAddress(Form):
     address=StringField(validators=[InputRequired(message='请输入收货地址')])
 
 
-
+class Verify_upPersonal(Form):                                                             #更新用户信息验证
+    username=StringField(validators=[Length(min=2,max=50,message='用户名称长度只能在2到50位之间')])
+    intr=StringField(validators=[InputRequired(message='请输入您的签名')])
+    email=StringField(validators=[InputRequired(message='请输入邮箱'), Email(message='邮箱格式不正确')])  # 验证邮箱格式
+    def validate_email(self,field):
+        user=UserModel.query.filter_by(Email=field.data).first()
+        if user:
+            raise ValidationError(message='邮箱已存在')
 
 
 

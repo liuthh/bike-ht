@@ -23,6 +23,7 @@ class UserModel(db.Model):                      #用户表
     is_delete=db.Column(db.String(255),nullable=True)                   #是否拉黑
     avatar = db.Column(db.String(200))                                  #头像
     personal_introduction = db.Column(db.String(150))                   #个人介绍
+    Email = db.Column(db.String(100))
     gender = db.Column(db.Enum(GenderEnum), default=GenderEnum.unknow)  #性别
     create_time=db.Column(db.DateTime,default=datetime.now())           #创建时间
     money=db.Column(db.Integer,default=0)                               #金钱
@@ -44,7 +45,8 @@ class UserModel(db.Model):                      #用户表
             'personal_introduction':self.personal_introduction,
             # 'gender':self.gender,
             'create_time':self.create_time,
-            'money':self.money
+            'money':self.money,
+            'email':self.Email
         }
         return d
 

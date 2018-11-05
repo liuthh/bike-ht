@@ -140,8 +140,14 @@ class GoodsT_Model(db.Model):                       #商品类型表
     id=db.Column(db.Integer,primary_key=True,autoincrement=True)
     name=db.Column(db.String(50),nullable=False)    #商品名称
     goodsMt_id=db.Column(db.Integer,db.ForeignKey('goods_max_type.id'))
-
     type=db.relationship('GoodsMT_Model',backref='types')
+
+    def to_dic(self):
+        d = {
+            'name': self.name,
+            'id':self.id
+        }
+        return d
 
 
 

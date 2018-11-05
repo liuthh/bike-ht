@@ -42,7 +42,7 @@ class UserModel(db.Model):                      #用户表
             'mobile':self.mobile,
             'avatar':self.avatar,
             'personal_introduction':self.personal_introduction,
-            'gender':self.gender,
+            # 'gender':self.gender,
             'create_time':self.create_time,
             'money':self.money
         }

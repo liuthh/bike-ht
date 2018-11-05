@@ -64,10 +64,11 @@ class Verify_GenerateOrder(Form):                                  #生成订单
 
 class Verify_aCart(Form):                                                #添加购物车商品id验证
     goods_id=IntegerField(validators=[InputRequired(message='商品id没传参')]) #商品id
-    number=IntegerField(validators=[Regexp(r'\d}',message='数量输入错误')])
+    number=IntegerField(validators=[Regexp(r'\d',message='数量输入错误')])
 
-class Verify_dCart(Verify_aCart):                                       #移除购物车商品
-    types=IntegerField(validators=[Regexp(r'[10]',message='选择减少商品或者删除商品类型错误（0，1）')])
+class Verify_dCart(Form):                                       #移除购物车商品
+    types=IntegerField(validators=[InputRequired(message='传参类型错误')])
+    good_id = IntegerField(validators=[InputRequired(message='商品id没传参')])  # 商品id
 
 class Verify_apost(Form):                                                #添加帖子验证
     title=StringField(validators=[InputRequired(message='标题不能为空')])  #标题

@@ -200,11 +200,7 @@ def getSpDetial():
         Goods = GoodsModel.query.filter_by(id=spId).first()
         if Goods:
             good = Goods.to_dic()
-            good_imgs = good.goods_img
-            good_imgs_dic = []
-            for good_img in good_imgs:
-                good_imgs_dic.append(good_img.to_dic())
-            return jsonify({'code': 200, 'good': good, 'good_imgs': good_imgs_dic})
+            return jsonify({'code': 200, 'good': good})
         else:
             return jsonify({'code': 404, 'message': '不存在该商品'})
     else:
@@ -332,6 +328,7 @@ def aCart():
         number = form.number.data
         user = g.front_user
         goods = GoodsModel.query.filter_by(id=goods_id).first()  # 查询是否有这件商品
+        print(goods_id,number,user,goods)
         if goods:
             cart1 = CartModel.query.filter_by(user_id=user.id).first()  # 查询用户是否有购物车
             if cart1:
@@ -371,14 +368,18 @@ def delGoods():
             code 411    购物车中不存在该商品
             code 412    表单验证失败
     '''
+    print(request.form)
     form = Verify_dCart(request.form)
     if form.validate():
-        goods_id = form.goods_id.data
+        goods_id = form.good_id.data
         types = form.types.data
         user_id = g.front_user.id
+        print(goods_id,types)
         cart = CartModel.query.filter_by(user_id=user_id).first()
         gods = db.session.query(cart_goods_middle).filter_by(cart_id=cart.id, goods_id=goods_id).first()
+        print('1')
         if types == 1:
+            print(2)
             count = gods.number
             if count <= 1:
                 return jsonify({'code': 201, 'message': '购物车商品只剩下1'})
@@ -393,7 +394,7 @@ def delGoods():
             db.session.commit()
             return jsonify({'code': 200, 'message': '删除商品成功'})
     else:
-        message = form.errors.popitem()[0][1]  # 弹出表单验证失败第一条错误信息
+        message = form.errors.popitem()[1][0]  # 弹出表单验证失败第一条错误信息
         return jsonify({'code': 412, 'message': message})
 
 
@@ -583,6 +584,7 @@ def genarateOrderAll():
     a = request.values
     goods = list(a)[0]
     goods = json.loads(goods)
+    user=g.front_user
     orders_dic = []
     for shop in goods:
         number = shop['number']
@@ -600,6 +602,9 @@ def genarateOrderAll():
                 order.address = address
                 order.good = good
                 order.user = user
+                sql = "Delete from cart_goods_middle WHERE cart_id ={} and goods_id={}".format(user.cart.id,good.id)  # 查询购物车的这个商品
+                res = cur.execute(sql)  # 执行sql语句
+                dbMy.commit()
                 db.session.add(order)
                 db.session.commit()
                 orders_dic.append(order.to_dic())
@@ -607,18 +612,20 @@ def genarateOrderAll():
                 return jsonify({'code': 411, 'message': '地址传参错误'})
         else:
             return jsonify({'code': 411, 'message': '没有找到该商品'})
-    return jsonify({'code': '200', 'message': '生成订单成功', 'order': orders_dic})
+    return jsonify({'code':200, 'message': '生成订单成功', 'order': orders_dic})
 
 
 @bp.route('/overOrder/', methods=['POST'])  # 结算多个订单
 @RequestLogin
 def overOrder():
     order_id_all = request.values
-    order_id_all = json.loads(order_id_all)
-    order_id_all = list(order_id_all)[0]
-    password = list(order_id_all)[1]
+    order_id_all1=list(order_id_all)[0]
+    order_id_all=json.loads(order_id_all1)[0]
+    password=json.loads(order_id_all1)[1]
     price = 0
-    user = g.front_user
+    print(type(password))
+    password=password['password']
+    print(password)
     for order_id in order_id_all:
         order_id = int(order_id)
         order = OrderModel.query.get(order_id)
@@ -627,12 +634,16 @@ def overOrder():
             order.status = StatusEnum.PAID
         else:
             return jsonify({'code': 404, 'message': '不存在该订单'})
-    if price <= user.money:
-        user.money -= price
-        db.session.commit()
-        return jsonify({'code': 200, 'message': '支付成功'})
+    user=g.front_user
+    if user.check_passwd(password):
+        if price <= user.money:
+            user.money -= price
+            db.session.commit()
+            return jsonify({'code': 200, 'message': '支付成功'})
+        else:
+            return jsonify({'code': 203, 'message': '对不起余额不足'})
     else:
-        return jsonify({'code': 203, 'message': '对不起余额不足'})
+        return jsonify({'code':405,'message':'支付失败，密码错误'})
 
 
 
